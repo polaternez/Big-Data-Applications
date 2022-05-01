@@ -1,2 +1,2 @@
 # Big-Data-Applications
-different field and various technologies
+Big-Data-Applications

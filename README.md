@@ -1,6 +1,7 @@
 # Big-Data-Applications
-End-to-End Big Data Projects 
-### The following technologies help for compatibility
+End-to-End Big Data Projects
+
+The following technologies help for compatibility:
 * Java SE 11 
 * MongoDB 5.0.9
 * Elasticsearch - elasticsearch-6.8.16

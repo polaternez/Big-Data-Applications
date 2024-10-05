@@ -1,7 +1,8 @@
 # Big-Data-Applications
-End-to-End Big Data Projects
+This repository provides a collection of end-to-end big data projects that demonstrate the application of various big data technologies. These projects showcase real-world use cases and provide practical examples for learning and experimentation.
 
-The following technologies help for compatibility:
+## Prerequisites
+Ensure you have the following technologies installed, all with the specified versions for compatibility:
 * Java SE 11 
 * MongoDB 5.0.9
 * Elasticsearch - elasticsearch-6.8.16

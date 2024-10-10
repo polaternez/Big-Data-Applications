@@ -9,39 +9,51 @@ import org.apache.spark.sql.streaming.Trigger;
 import org.apache.spark.sql.types.DataTypes;
 import org.apache.spark.sql.types.StructType;
 
+import java.util.concurrent.TimeoutException;
+
 public class StreamingApp {
-    public static void main(String[] args) throws StreamingQueryException {
+    public static void main(String[] args) throws StreamingQueryException, TimeoutException {
+        System.setProperty("hadoop.home.dir", "C:\\bigdata\\hadoop");
 
-        System.setProperty("hadoop.home.dir", "C:\\hadoop");
-
+        // Kafka broker and topic
+        String kafkaBroker = "localhost:9092";
+        String topic = "search-analysis-stream";
+        
+        SparkSession spark = SparkSession.builder()
+                .master("local")
+                .appName("Spark Search Analysis")
+                .config("spark.mongodb.output.uri", "mongodb://127.0.0.1/eticaret.popularproducts")
+                .getOrCreate();
+        
         StructType schema = new StructType()
                 .add("search", DataTypes.StringType)
                 .add("region", DataTypes.StringType)
                 .add("current_ts", DataTypes.StringType)
                 .add("userid", DataTypes.IntegerType);
+        Dataset<Row> kafkaDF = spark.readStream().format("kafka")
+                .option("kafka.bootstrap.servers", kafkaBroker)
+                .option("subscribe", topic)
+                .load();
+        
+        Dataset<Row> extractedDF = kafkaDF.selectExpr("CAST(value AS STRING)")
+                .select(functions.from_json(functions.col("value"), schema).as("data"))
+                .select("data.*");
 
-        SparkSession sparkSession = SparkSession.builder().master("local")
-                .config("spark.mongodb.output.uri", "mongodb://167.172.61.77/eticaret.popularproducts")
-                .appName("Spark Search Analysis").getOrCreate();
+        Dataset<Row> maskFilter = extractedDF.filter(
+                extractedDF.col("search").equalTo("mask")
+        );
 
-        Dataset<Row> loadDS = sparkSession.readStream().format("kafka")
-                .option("kafka.bootstrap.servers", "167.172.61.77:9092")
-                .option("subscribe", "search-analysis-stream").load();
-
-
-        Dataset<Row> rowDataset = loadDS.selectExpr("CAST(value AS STRING)");
-
-        Dataset<Row> valuesDS = rowDataset.select(functions.from_json(rowDataset.col("value"), schema).as("data")).select("data.*");
-
-
-        Dataset<Row> maskFilter = valuesDS.filter(valuesDS.col("search").equalTo("mask"));
-
-        maskFilter.writeStream().trigger(Trigger.ProcessingTime(60000)).foreachBatch(new VoidFunction2<Dataset<Row>, Long>() {
-            @Override
-            public void call(Dataset<Row> rowDataset, Long aLong) throws Exception {
-                MongoSpark.write(rowDataset).option("collection", "searchMask").mode("append").save();
-            }
-        }).start().awaitTermination();
+        maskFilter.writeStream()
+                .trigger(Trigger.ProcessingTime(60000))
+                .foreachBatch(new VoidFunction2<Dataset<Row>, Long>() {
+                    @Override
+                    public void call(Dataset<Row> rowDataset, Long aLong) throws Exception {
+                        MongoSpark.write(rowDataset)
+                                .option("collection", "searchMask")
+                                .mode("append")
+                                .save();
+                    }
+                }).start().awaitTermination();
 
 //        maskFilter.writeStream().format("console").outputMode("append").start().awaitTermination();
 

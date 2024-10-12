@@ -16,10 +16,8 @@ import java.util.Random;
 @Service
 @Qualifier("click")
 public class ProducerServiceImpl implements ProducerService{
-
     @Autowired
     KafkaMessageProducer kafkaMessageProducer;
-
     Gson gson;
     JSONObject jsonObject;
 
@@ -31,9 +29,8 @@ public class ProducerServiceImpl implements ProducerService{
     @Override
     public ClickRequest producer(ClickRequest request) {
         String jsonData = gson.toJson(request);
-
-        System.out.println(jsonData);
         kafkaMessageProducer.send(jsonData);
+        System.out.println(jsonData);
 
         return request;
     }

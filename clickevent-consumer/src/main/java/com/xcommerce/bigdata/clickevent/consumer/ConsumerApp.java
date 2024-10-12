@@ -20,35 +20,34 @@ import java.io.IOException;
 import java.time.Duration;
 import java.util.Arrays;
 import java.util.Properties;
+import java.util.UUID;
 
 public class ConsumerApp {
     public static void main(String[] args) throws IOException {
-
-        RestHighLevelClient client = new RestHighLevelClient(
+        // Create Elasticsearch client
+        RestHighLevelClient esClient = new RestHighLevelClient(
                 RestClient.builder(new HttpHost("localhost", 9200)));
 
-        IndexRequest request = new IndexRequest("clickevent");
+        // Create Kafka consumer
+        Properties props = new Properties();
+        props.put(ConsumerConfig.BOOTSTRAP_SERVERS_CONFIG, "localhost:9092");
+        props.put(ConsumerConfig.KEY_DESERIALIZER_CLASS_CONFIG, StringDeserializer.class.getName());
+        props.put(ConsumerConfig.VALUE_DESERIALIZER_CLASS_CONFIG, StringDeserializer.class.getName());
+        /*props.put(ConsumerConfig.GROUP_ID_CONFIG, "xcommerce01");
+        props.put(ConsumerConfig.CLIENT_ID_CONFIG, "xcommercecl01");*/
+        props.put(ConsumerConfig.GROUP_ID_CONFIG, UUID.randomUUID().toString());
+        props.put(ConsumerConfig.AUTO_OFFSET_RESET_CONFIG, "earliest");
 
-
-        Properties config = new Properties();
-        config.put(ConsumerConfig.BOOTSTRAP_SERVERS_CONFIG, "localhost:9092");
-        config.put(ConsumerConfig.KEY_DESERIALIZER_CLASS_CONFIG, new StringDeserializer().getClass().getName());
-        config.put(ConsumerConfig.VALUE_DESERIALIZER_CLASS_CONFIG, new StringDeserializer().getClass().getName());
-        config.put(ConsumerConfig.GROUP_ID_CONFIG, "xcommerce01");
-        config.put(ConsumerConfig.CLIENT_ID_CONFIG, "xcommercecl01");
-
-        KafkaConsumer<String, String> kafkaConsumer = new KafkaConsumer<>(config);
-
+        KafkaConsumer<String, String> kafkaConsumer = new KafkaConsumer<>(props);
         kafkaConsumer.subscribe(Arrays.asList("clickevent"));
 
+        IndexRequest request = new IndexRequest("clickevent");
         while (true) {
             ConsumerRecords<String, String> records = kafkaConsumer.poll(Duration.ZERO);
-
             for (ConsumerRecord<String, String> rec : records){
-               request.source(rec.value(), XContentType.JSON);
-               IndexResponse response = client.index(request, RequestOptions.DEFAULT);
-
-               System.out.println(response.getId());
+                request.source(rec.value(), XContentType.JSON);
+                IndexResponse response = esClient.index(request, RequestOptions.DEFAULT);
+                System.out.println(response.getId());
             }
         }
 

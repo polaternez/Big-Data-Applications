@@ -12,7 +12,6 @@ import java.sql.Timestamp;
 
 @RestController
 public class ClickController {
-
     @Autowired
     @Qualifier("random")
     ProducerService producerService;
@@ -21,7 +20,6 @@ public class ClickController {
     public ClickRequest clickEvent(@RequestBody ClickRequest request){
         Timestamp timestamp = new Timestamp(System.currentTimeMillis());
         request.setCurrent_ts(timestamp.toString());
-
        return  producerService.producer(request);
     }
 }

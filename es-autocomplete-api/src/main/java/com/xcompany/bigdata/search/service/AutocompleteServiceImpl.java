@@ -25,41 +25,40 @@ import static com.xcompany.bigdata.search.model.Constants.*;
 
 @Service
 public class AutocompleteServiceImpl implements AutocompleteService{
-
-    RestHighLevelClient client;
+    RestHighLevelClient esClient;
     SearchRequest request;
     SearchSourceBuilder sourceBuilder;
-
     Gson gson;
 
     @PostConstruct
     public void init(){
-        client = new RestHighLevelClient(RestClient.builder(new HttpHost(ES_HOSTNAME, ES_PORT)));
+        esClient = new RestHighLevelClient(
+                RestClient.builder(new HttpHost(ES_HOSTNAME, ES_PORT))
+        );
         request = new SearchRequest(ES_INDEX);
         sourceBuilder = new SearchSourceBuilder();
-
         gson = new Gson();
     }
 
     @Override
     public AutocompleteResponse search(String term) throws IOException {
-        ArrayList<AutocompleteDetail> data = new ArrayList<>();
+        ArrayList<AutocompleteDetail> acList = new ArrayList<>();
 
         sourceBuilder.from(0);
         sourceBuilder.size(3);
-        sourceBuilder.query(QueryBuilders.matchQuery(ES_AUTOCOMPLETE_FIELD, term).fuzziness(2));
+        sourceBuilder.query(
+                QueryBuilders.matchQuery(ES_AUTOCOMPLETE_FIELD, term).fuzziness(2)
+        );
         request.source(sourceBuilder);
 
-        SearchResponse response = client.search(request, RequestOptions.DEFAULT);
-        SearchHits hits = response.getHits();
-        SearchHit[] hitsDetail = hits.getHits();
-
-        for (int i=0; i<hitsDetail.length; i++){
-            String responseDetail = hitsDetail[i].getSourceAsString();
-            AutocompleteDetail detail = gson.fromJson(responseDetail, AutocompleteDetail.class);
-            data.add(detail);
+        SearchResponse searchResponse = esClient.search(request, RequestOptions.DEFAULT);
+        SearchHit[] hits = searchResponse.getHits().getHits();
+        for(SearchHit hit : hits){
+            String hitDetail = hit.getSourceAsString();
+            AutocompleteDetail acDetail = gson.fromJson(hitDetail, AutocompleteDetail.class);
+            acList.add(acDetail);
         }
 
-        return new AutocompleteResponse(data);
+        return new AutocompleteResponse(acList);
     }
 }

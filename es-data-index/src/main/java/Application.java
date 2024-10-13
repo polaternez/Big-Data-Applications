@@ -14,14 +14,13 @@ import java.util.Scanner;
 
 public class Application {
     public static void main(String[] args) throws IOException {
+        RestHighLevelClient esClient = new RestHighLevelClient(
+                RestClient.builder(new HttpHost("localhost", 9200))
+        );
 
-        RestHighLevelClient client = new RestHighLevelClient(
-                RestClient.builder(new HttpHost("localhost", 9200)));
-
-        IndexRequest request = new IndexRequest("product");
-
-        File file = new File("C:\\Users\\Master\\Desktop\\Big Data\\Datasets\\Applications\\AutocompleteApp\\products.csv");
+        File file = new File("C:\\Users\\Pantheon\\Desktop\\BigData\\Datasets\\Applications\\AutocompleteApp\\products.csv");
         Scanner scanner = new Scanner(file);
+        IndexRequest request = new IndexRequest("product");
 
         while (scanner.hasNext()){
             String line = scanner.nextLine();
@@ -34,10 +33,8 @@ public class Application {
             jsonObject.put("title", title);
 
             request.source(jsonObject.toJSONString(), XContentType.JSON);
-
-            client.index(request, RequestOptions.DEFAULT);
-
+            esClient.index(request, RequestOptions.DEFAULT);
         }
-
+        esClient.close();
     }
 }

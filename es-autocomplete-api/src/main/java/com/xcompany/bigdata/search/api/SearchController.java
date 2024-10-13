@@ -11,14 +11,12 @@ import java.io.IOException;
 
 @RestController
 public class SearchController {
-
     @Autowired
     AutocompleteService autocompleteService;
 
     @GetMapping("/autocomplete")
     public AutocompleteResponse autocomplete(@RequestParam String term) throws IOException {
         AutocompleteResponse response = autocompleteService.search(term);
-
         return response;
     }
 }

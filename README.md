@@ -4,7 +4,7 @@ This repository provides a collection of end-to-end big data projects that demon
 ## Prerequisites
 Ensure you have the following technologies installed, all with the specified versions for compatibility:
 * Java SE 11 
-* MongoDB 5.0.9
-* Elasticsearch - elasticsearch-6.8.16
-* Apache Kafka - kafka_2.11-2.4.1
-* Apache Spark - spark-2.4.4-bin-hadoop2.7
+* MongoDB 8.0.0
+* Elasticsearch - elasticsearch-7.7.0
+* Apache Kafka - kafka_2.12-2.8.1
+* Apache Spark - spark-3.0.0-bin-hadoop2.7
